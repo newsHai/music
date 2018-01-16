@@ -3,7 +3,9 @@
       <div class="slider-group" ref="sliderGroup">
           <slot></slot>
       </div>
-      <div class="dots"></div>
+      <div class="dots">
+          <span class="dot" v-for="(item,index) in dots" :class="{active:currentPageIndex === index}"></span>
+      </div>
   </div>
 </template>
 
@@ -11,6 +13,12 @@
 import BScroll from 'better-scroll'
 import {addClass} from 'common/js/dom'
 export default {
+    data(){
+        return {
+            dots:[],
+            currentPageIndex:0
+        }
+    },
     props:{
         loop:{
             type:Boolean,
@@ -28,7 +36,12 @@ export default {
     mounted(){
         setTimeout(() => {
             this._setSliderWidth();
+            this._initDots();
             this._initSlider();
+            
+            if(this.autoPlay){
+                this._play();
+            }
         },20)
     },
     methods:{
@@ -49,7 +62,34 @@ export default {
            this.$refs.sliderGroup.style.width = width + 'px';
        },
        _initSlider(){
-
+            var snap = {
+                loop:this.loop,
+                snapThreshold:0.3,
+                snapSpeed:400,
+            }
+            this.slider = new BScroll(this.$refs.slider,{
+                scrollX:true,
+                scrollY:false,
+                momentum:false,
+                snap:snap,
+                click:true
+            })
+            this.slider.on('scrollEnd', () => {
+                this.currentPageIndex = this.slider.getCurrentPage().pageX;
+                if(this.autoPlay){
+                    clearTimeout(this.timer);
+                    this._play();
+                }
+            })
+       },
+       _initDots(){
+           this.dots = new Array(this.children.length)
+       },
+       _play(){
+           let pageIndex = this.currentPageIndex + 1;
+           this.timer = setTimeout(() => {
+               this.slider.goToPage(pageIndex,0,400);
+           },this.interval)
        }
     }
 }
@@ -77,4 +117,22 @@ export default {
                 img
                     display: block
                     width: 100%
+        .dots
+            position: absolute
+            right: 0
+            left: 0
+            bottom: 12px
+            text-align: center
+            font-size: 0
+            .dot
+                display: inline-block
+                margin: 0 4px
+                width: 8px
+                height: 8px
+                border-radius: 50%
+                background: $color-text-l
+                &.active
+                    width: 20px
+                    border-radius: 5px
+                    background: $color-text-ll
 </style>
