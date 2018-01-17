@@ -43,9 +43,17 @@ export default {
                 this._play();
             }
         },20)
+
+        window.addEventListener('resize', () => {
+            if(!this.slider){
+                return;
+            }
+            this._setSliderWidth(true);
+            this.slider.refresh()
+        })
     },
     methods:{
-       _setSliderWidth(){
+       _setSliderWidth(isResize){
            this.children = this.$refs.sliderGroup.children;
            let width=0;
            let sliderWidth = this.$refs.slider.clientWidth;
@@ -56,7 +64,7 @@ export default {
                width += sliderWidth;
            }
            
-           if(this.loop){
+           if(this.loop && !isResize){
                width += 2*sliderWidth;
            }
            this.$refs.sliderGroup.style.width = width + 'px';
@@ -71,11 +79,14 @@ export default {
                 scrollX:true,
                 scrollY:false,
                 momentum:false,
-                snap:snap,
-                click:true
+                snap:snap
             })
             this.slider.on('scrollEnd', () => {
-                this.currentPageIndex = this.slider.getCurrentPage().pageX;
+                let pageIndex = this.slider.getCurrentPage().pageX;
+                if(this.loop){
+                   pageIndex = pageIndex;
+                }
+                this.currentPageIndex = pageIndex;
                 if(this.autoPlay){
                     clearTimeout(this.timer);
                     this._play();
@@ -87,10 +98,15 @@ export default {
        },
        _play(){
            let pageIndex = this.currentPageIndex + 1;
+           let len = this.dots.length;
            this.timer = setTimeout(() => {
-               this.slider.goToPage(pageIndex,0,400);
+               this.slider.goToPage((pageIndex % len),0,400);
+               
            },this.interval)
        }
+    },
+    destroyed () {
+        clearTimeout(this.timer);
     }
 }
 </script>
